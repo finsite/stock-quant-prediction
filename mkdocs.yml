@@ -1,8 +1,8 @@
 ---
-site_name: Template Python
-site_description: Documentation for the Template Python Project
+site_name: stock-quant-prediction
+site_description: Documentation for the stock-quant-prediction Project
 site_author: Mark Quinn
-repo_url: https://github.com/finsite/template_python
+repo_url: https://github.com/finsite/stock-quant-prediction
 theme:
   name: material
 nav:

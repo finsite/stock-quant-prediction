@@ -1,0 +1,22 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stock-quant-prediction
+  labels:
+    app: stock-quant-prediction
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stock-quant-prediction
+  template:
+    metadata:
+      labels:
+        app: stock-quant-prediction
+    spec:
+      containers:
+        - name: stock-quant-prediction
+          image: stock-quant-prediction:latest
+          ports:
+            - containerPort: 8080
