@@ -7,6 +7,7 @@ and sends processed results to the output handler.
 import json
 import os
 import time
+from typing import Any
 
 import boto3
 import pika
@@ -63,49 +64,41 @@ def consume_rabbitmq() -> None:
     channel.exchange_declare(exchange=RABBITMQ_EXCHANGE, exchange_type="topic", durable=True)
     channel.queue_declare(queue=RABBITMQ_QUEUE, durable=True)
     channel.queue_bind(
-        exchange=RABBITMQ_EXCHANGE, queue=RABBITMQ_QUEUE, routing_key=RABBITMQ_ROUTING_KEY
+        exchange=RABBITMQ_EXCHANGE,
+        queue=RABBITMQ_QUEUE,
+        routing_key=RABBITMQ_ROUTING_KEY,
     )
 
     def callback(ch, method, properties, body: bytes) -> None:
-        """:param ch: param method:
-        :param properties: param body: bytes:
-        :param method: param body: bytes:
-        :param body: bytes:
-        :param body: type body: bytes :
-        :param body: type body: bytes :
-        :param body: bytes:
-        :param body: bytes:
-        :param body: bytes:
-        :param body: bytes:
-
-        """
+        """Callback for handling RabbitMQ messages."""
         try:
-            message = json.loads(body)
-            logger.info("Received message: %s", message)
+            message: dict[str, Any] = json.loads(body)
+            logger.info("📩 Received RabbitMQ message: %s", message)
 
             result = analyze_sentiment(message)
-            result["source"] = "SECSentiment"
+            if result:
+                result["source"] = "SECSentiment"
+                send_to_output(result)
 
-            send_to_output(result)
             ch.basic_ack(delivery_tag=method.delivery_tag)
         except json.JSONDecodeError:
-            logger.error("Invalid JSON: %s", body)
+            logger.error("❌ Invalid JSON: %s", body)
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
         except Exception as e:
-            logger.error("Error processing message: %s", e)
+            logger.error("❌ Error processing message: %s", e)
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
     channel.basic_consume(queue=RABBITMQ_QUEUE, on_message_callback=callback)
-    logger.info("Waiting for messages from RabbitMQ...")
+    logger.info("📡 Waiting for RabbitMQ messages...")
 
     try:
         channel.start_consuming()
     except KeyboardInterrupt:
-        logger.info("Gracefully stopping RabbitMQ consumer...")
+        logger.info("🛑 Stopping RabbitMQ consumer...")
         channel.stop_consuming()
     finally:
         connection.close()
-        logger.info("RabbitMQ connection closed.")
+        logger.info("🔌 RabbitMQ connection closed.")
 
 
 def consume_sqs() -> None:
@@ -114,7 +107,7 @@ def consume_sqs() -> None:
         logger.error("SQS not initialized or missing queue URL.")
         return
 
-    logger.info("Polling for SQS messages...")
+    logger.info("📡 Polling for SQS messages...")
 
     while True:
         try:
@@ -126,27 +119,28 @@ def consume_sqs() -> None:
 
             for msg in response.get("Messages", []):
                 try:
-                    body = json.loads(msg["Body"])
-                    logger.info("Received SQS message: %s", body)
+                    body: dict[str, Any] = json.loads(msg["Body"])
+                    logger.info("📩 Received SQS message: %s", body)
 
                     result = analyze_sentiment(body)
-                    result["source"] = "SECSentiment"
-
-                    send_to_output(result)
+                    if result:
+                        result["source"] = "SECSentiment"
+                        send_to_output(result)
 
                     sqs_client.delete_message(
-                        QueueUrl=SQS_QUEUE_URL, ReceiptHandle=msg["ReceiptHandle"]
+                        QueueUrl=SQS_QUEUE_URL,
+                        ReceiptHandle=msg["ReceiptHandle"],
                     )
-                    logger.info("Deleted SQS message: %s", msg["MessageId"])
+                    logger.info("✅ Deleted SQS message: %s", msg["MessageId"])
                 except Exception as e:
-                    logger.error("Error processing SQS message: %s", e)
+                    logger.error("❌ Error processing SQS message: %s", e)
         except Exception as e:
             logger.error("SQS polling failed: %s", e)
             time.sleep(5)
 
 
 def consume_messages() -> None:
-    """Selects the consumer based on QUEUE_TYPE environment variable."""
+    """Starts the appropriate consumer based on QUEUE_TYPE."""
     if QUEUE_TYPE == "rabbitmq":
         consume_rabbitmq()
     elif QUEUE_TYPE == "sqs":

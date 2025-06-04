@@ -1,3 +1,5 @@
+"""Initializes a logger for the application with configurable format and log level."""
+
 import logging
 import os
 
@@ -10,26 +12,17 @@ def setup_logger(name: str = "app") -> logging.Logger:
     with the format:
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-    The default log level is controlled via the LOG_LEVEL environment variable.
+    The default log level and format are controlled via environment variables:
+    - LOG_LEVEL (default: INFO)
+    - LOG_FORMAT (default: plain; alternatives: json)
 
     Args:
-    ----
         name (str): The name of the logger. Defaults to "app".
 
-    :param name: str:  (Default value = "app")
-    :param name: str:  (Default value = "app")
-    :param name: str:  (Default value = "app")
-    :param name: Default value = "app")
-    :type name: str :
-    :param name: Default value = "app")
-    :type name: str :
-    :param name: str:  (Default value = "app")
-    :param name: str:  (Default value = "app")
-    :param name: str:  (Default value = "app")
-    :param name: str:  (Default value = "app")
-
+    Returns:
+        logging.Logger: Configured logger instance.
     """
-    logger: logging.Logger = logging.getLogger(name)
+    logger = logging.getLogger(name)
 
     if not logger.hasHandlers():
         handler = logging.StreamHandler()
@@ -40,7 +33,9 @@ def setup_logger(name: str = "app") -> logging.Logger:
                 '{"timestamp":"%(asctime)s","name":"%(name)s","level":"%(levelname)s","message":"%(message)s"}'
             )
         else:
-            formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+            formatter = logging.Formatter(
+                "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            )
 
         handler.setFormatter(formatter)
         logger.addHandler(handler)

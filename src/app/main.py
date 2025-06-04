@@ -1,8 +1,7 @@
-"""Main entry point for the Stock-Sent-SEC module.
+"""Main entry point for the stock-quant-prediction module.
 
-This script initializes the SEC filings sentiment analysis service,
-sets up logging, and starts consuming messages from the configured
-message queue.
+Initializes the prediction engine, sets up logging,
+and begins consuming messages for model-based prediction.
 """
 
 import os
@@ -19,14 +18,13 @@ logger = setup_logger(__name__)
 
 
 def main() -> None:
-    """Starts the SEC Sentiment Analysis Service.
+    """Starts the prediction engine service.
 
-    This service listens to messages from a queue (RabbitMQ or SQS),
-    applies sentiment analysis to SEC filings, and publishes the results.
-
-
+    This service consumes feature data from the message queue,
+    applies a predictive model (e.g., regression, LSTM),
+    and publishes forecasted outputs.
     """
-    logger.info("Starting SEC Sentiment Analysis Service...")
+    logger.info("🚀 Starting Prediction Engine Service...")
     consume_messages()
 
 
